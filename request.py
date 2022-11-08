@@ -51,7 +51,7 @@ try:
                 dataFlowName = dataFlowData['name']  
                 refreshTime = parse_datetime(dataFlowData['entities'][0]['partitions'][0]['refreshTime']).replace(minute = 0, second = 0, microsecond = 0)         #get last update time in UTC
                 currentTime = datetime.datetime.utcnow().replace(minute = 0, second = 0, microsecond = 0)                                                    #get current time in UTC
-                if not ((refreshTime.date() == currentTime.date()) & (refreshTime.hour == currentTime.hour)) & ('ПредыдущиеМесяцы' in dataFlowName):                                                  #check if dataflow was already updated today
+                if (refreshTime.date() != currentTime.date()) | ((refreshTime.date() == currentTime.date()) & (refreshTime.hour != currentTime.hour)):                                                  #check if dataflow was already updated today
                     refresh = requests.post('https://api.powerbi.com/v1.0/myorg/groups/' + workspaceID +                    #refresh if it is not
                                             '/dataflows/' + i + '/refreshes?processType=default',
                                             auth = BearerAuth(Bearer), data= {"notifyOption": "MailOnFailure"})        
@@ -68,17 +68,17 @@ try:
                 refreshStatus = 'DataflowConnectionError'
                 refreshStatusCode = '-'
 
-            writer.writerows([{"workspaceName": wk['name'],"responseStatusCode": dataFlowRequest.status_code,               
-                            "responseStatus":dataFlowRequest.reason, "refreshStatus": refreshStatus,
-                            "dataFlowName": dataFlowName, "refreshDateTime":refreshTime,
-                            "refreshStatusCode":refreshStatusCode, "currentTime":currentTime}])
+            writer.writerows([{ "workspaceName": wk['name'],"responseStatusCode": dataFlowRequest.status_code,               
+                                "responseStatus":dataFlowRequest.reason, "refreshStatus": refreshStatus,
+                                "dataFlowName": dataFlowName, "refreshDateTime":refreshTime,
+                                "refreshStatusCode":refreshStatusCode, "currentTime":currentTime}])
 except  requests.HTTPError as wsce:
     dataFlowName = 'WorkspaceConnectionError'                             
     currentTime = str(datetime.datetime.utcnow())                                              
     refreshTime =  '-'
     refreshStatus = 'WorkspaceConnectionError'
     refreshStatusCode = '-'
-    writer.writerows([{"workspaceName": 'WorkspaceConnectionError',"responseStatusCode": workspaceRequest.status_code,               
+    writer.writerows([{ "workspaceName": 'WorkspaceConnectionError',"responseStatusCode": workspaceRequest.status_code,               
                         "responseStatus":workspaceRequest.reason, "refreshStatus": refreshStatus,
                         "dataFlowName": dataFlowName, "refreshDateTime":refreshTime,
                         "refreshStatusCode":refreshStatusCode, "currentTime":currentTime}])
